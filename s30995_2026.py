@@ -1,9 +1,8 @@
-#s30995
-#05.05.2026
-#Random DNA sequence generator in FASTA format
+# s30995
+# 05.05.2026
+# Random DNA sequence generator in FASTA format
 
 import random
-
 
 def validate_positive_int(prompt: str, min_val: int = 1, max_val: int = 100_000) -> int:
     while True:
@@ -34,22 +33,22 @@ def get_distribution() -> dict:
             c = float(input("C: "))
             g = float(input("G: "))
             t = float(input("T: "))
-            total = a + c + g + t
-            if abs(total - 100.0) < 1e-6:
+            if abs((a + c + g + t) - 100.0) < 1e-6:
                 return {"A": a, "C": c, "G": g, "T": t}
         except ValueError:
             pass
         print("Error: values must be numbers summing to 100.")
 
 
-def generate_sequence(length: int, distribution: dict = None) -> str:
+def generate_sequence(length: int) -> str:
     nucleotides = ["A", "C", "G", "T"]
+    return "".join(random.choice(nucleotides) for _ in range(length))
 
-    if distribution:
-        weights = [distribution[n] for n in nucleotides]
-        return "".join(random.choices(nucleotides, weights=weights, k=length))
-    else:
-        return "".join(random.choice(nucleotides) for _ in range(length))
+
+def generate_weighted_sequence(length: int, distribution: dict) -> str:
+    nucleotides = ["A", "C", "G", "T"]
+    weights = [distribution[n] for n in nucleotides]
+    return "".join(random.choices(nucleotides, weights=weights, k=length))
 
 
 def calculate_stats(sequence: str) -> dict:
@@ -81,8 +80,11 @@ def format_fasta(seq_id: str, description: str, sequence: str, line_width: int =
     if description:
         header += f" {description}"
 
-    lines = [sequence[i:i + line_width] for i in range(0, len(sequence), line_width)]
-    return header + "\n" + "\n".join(lines) + "\n# EOF_1\n"
+    lines = []
+    for i in range(0, len(sequence), line_width):
+        lines.append(sequence[i:i + line_width])
+
+    return header + "\n" + "\n".join(lines) + "\n"
 
 
 def find_motif(sequence: str, motif: str) -> list:
@@ -95,7 +97,8 @@ def find_motif(sequence: str, motif: str) -> list:
 
 def reverse_complement(sequence: str) -> str:
     comp = {"A": "T", "T": "A", "C": "G", "G": "C"}
-    return "".join(comp.get(base, base) for base in reversed(sequence))
+    rev = reversed(sequence)
+    return "".join(comp.get(b, b) for b in rev)
 
 
 def transcribe(sequence: str) -> str:
@@ -109,39 +112,41 @@ def main():
     name = input("Enter your name: ")
 
     use_dist = input("Custom nucleotide distribution? (y/n): ").lower()
-    distribution = get_distribution() if use_dist == "y" else None
-
-    sequence = generate_sequence(length, distribution)
+    if use_dist == "y":
+        distribution = get_distribution()
+        sequence = generate_weighted_sequence(length, distribution)
+    else:
+        sequence = generate_sequence(length)
 
     stats = calculate_stats(sequence)
 
     sequence_with_name = insert_name(sequence, name)
 
-    fasta_content = format_fasta(seq_id, description, sequence_with_name)
+    rev_comp = reverse_complement(sequence)
+    mrna = transcribe(sequence)
+
+    fasta_main = format_fasta(seq_id, description, sequence_with_name)
+    fasta_rev = format_fasta(seq_id + "_revcomp", "reverse complement", rev_comp)
+    fasta_mrna = format_fasta(seq_id + "_mrna", "transcribed mRNA", mrna)
 
     filename = f"{seq_id}.fasta"
     with open(filename, "w") as f:
-        f.write(fasta_content)
+        f.write(fasta_main)
+        f.write(fasta_rev)
+        f.write(fasta_mrna)
+        f.write("# EOF_1\n")
 
     print(f"\nSequence saved to file: {filename}\n")
 
     print(f"Sequence statistics (n={length}):")
     for n in ["A", "C", "G", "T"]:
         print(f"{n}: {stats[n]:.2f}%")
-    print(f"GC-content: {stats['gc_ratio_A']:.2f}%")
+    print(f"GC- content : {stats['gc_ratio_A']:.2f}%")
 
     motif = input("\nEnter motif to search (or empty to skip): ").upper()
     if motif:
         positions = find_motif(sequence, motif)
         print("Motif positions:", positions if positions else "Not found")
-
-    rev_comp = reverse_complement(sequence)
-    print("\nReverse complement (first 60 nt):")
-    print(rev_comp[:60])
-
-    mrna = transcribe(sequence)
-    print("\nmRNA (first 60 nt):")
-    print(mrna[:60])
 
 
 if __name__ == "__main__":
