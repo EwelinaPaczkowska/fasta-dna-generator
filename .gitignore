@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.env/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Output files
+*.fasta
+*.csv
+
+# IDE
+.vscode/
+.idea/
