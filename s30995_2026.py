@@ -1,6 +1,6 @@
 #s30995
 #05.05.2026
-
+#Random DNA sequence generator in FASTA format
 
 import random
 
