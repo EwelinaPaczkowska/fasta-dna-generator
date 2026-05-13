@@ -65,7 +65,7 @@ def calculate_stats(sequence: str) -> dict:
         stats[n] = (counts[n] / total * 100) if total > 0 else 0.0
 
     gc_ratio = ((counts["G"] + counts["C"]) / total * 100) if total > 0 else 0.0
-    stats["gc_ratio_A"] = gc_ratio
+    stats["GC"] = gc_ratio
 
     return stats
 
@@ -134,14 +134,13 @@ def main():
         f.write(fasta_main)
         f.write(fasta_rev)
         f.write(fasta_mrna)
-        f.write("# EOF_1\n")
 
     print(f"\nSequence saved to file: {filename}\n")
 
     print(f"Sequence statistics (n={length}):")
     for n in ["A", "C", "G", "T"]:
         print(f"{n}: {stats[n]:.2f}%")
-    print(f"GC- content : {stats['gc_ratio_A']:.2f}%")
+    print(f"GC- content : {stats['GC']:.2f}%")
 
     motif = input("\nEnter motif to search (or empty to skip): ").upper()
     if motif:
